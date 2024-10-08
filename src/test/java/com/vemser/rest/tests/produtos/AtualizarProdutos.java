@@ -7,24 +7,24 @@ import com.vemser.rest.data.factory.UsuariosDataFactory;
 import com.vemser.rest.model.response.ProdutosModel;
 import com.vemser.rest.model.response.produto.ProdutosResponse;
 import com.vemser.rest.model.response.usuario.UsuariosResponse;
-import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Story;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.*;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import static com.vemser.rest.story.ProdutoStory.*;
 
 @Epic(EPIC_ATUALIZAR)
 @Story(ATUALIZAR_STORY)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AtualizarProdutos {
 
     private final ProdutosClient produtosClient = new ProdutosClient();
     private final UsuariosClient usuariosClient = new UsuariosClient();
     private String usuarioId;
 
-    @BeforeEach
+    @BeforeClass
     public void setup() {
         UsuariosResponse response = usuariosClient.cadastrarUsuarios(UsuariosDataFactory.usuarioValido())
                 .then()
@@ -35,9 +35,7 @@ public class AtualizarProdutos {
         usuarioId = response.getId();
     }
 
-    @Test
-    @Order(1)
-    @Description(CE_ATUALIZAR_PRODUTOS_001)
+    @Test(description = CE_ATUALIZAR_PRODUTOS_001)
     public void testAtualizarProdutoComSucesso() {
         ProdutosModel produto = ProdutosDataFactory.produtoComNomeUtilizado();
 
@@ -48,12 +46,10 @@ public class AtualizarProdutos {
                     .extract()
                     .as(ProdutosResponse.class);
 
-        Assertions.assertEquals("Registro alterado com sucesso", response.getMessage(), "A mensagem de sucesso não é a esperada.");
+        Assert.assertEquals(response.getMessage(), "Registro alterado com sucesso", "A mensagem de sucesso não é a esperada.");
     }
 
-    @Test
-    @Order(2)
-    @Description(CE_ATUALIZAR_PRODUTOS_002)
+    @Test(description = CE_ATUALIZAR_PRODUTOS_002)
     public void testAtualizarProdutoComTokenInvalido() {
         ProdutosModel produto = ProdutosDataFactory.produtoValido();
 
@@ -64,16 +60,14 @@ public class AtualizarProdutos {
                     .extract()
                     .as(ProdutosResponse.class);
 
-        Assertions.assertEquals(
-                "Token de acesso ausente, inválido, expirado ou usuário do token não existe mais",
+        Assert.assertEquals(
                 response.getMessage(),
+                "Token de acesso ausente, inválido, expirado ou usuário do token não existe mais",
                 "A mensagem de erro de autenticação não é a esperada."
         );
     }
 
-    @Test
-    @Order(3)
-    @Description(CE_ATUALIZAR_PRODUTOS_003)
+    @Test(description = CE_ATUALIZAR_PRODUTOS_003)
     public void testAtualizarProdutoComCamposVazios() {
         ProdutosModel produto = ProdutosDataFactory.produtoComCamposVazios();
 
@@ -84,12 +78,9 @@ public class AtualizarProdutos {
                     .extract()
                     .as(ProdutosResponse.class);
 
-        Assertions.assertAll(
-                () -> Assertions.assertEquals("nome não pode ficar em branco", response.getNome(), "Validação falhou para o campo Nome."),
-                () -> Assertions.assertEquals("preco deve ser um número", response.getPreco(), "Validação falhou para o campo Preço."),
-                () -> Assertions.assertEquals("descrição não pode ficar em branco", response.getDescricao(), "Validação falhou para o campo Descrição."),
-                () -> Assertions.assertEquals("quantidade não pode ficar em branco", response.getQuantidade(), "Validação falhou para o campo Quantidade.")
-        );
+        Assert.assertEquals(response.getNome(), "nome não pode ficar em branco", "Validação falhou para o campo Nome.");
+        Assert.assertEquals(response.getPreco(), "preco deve ser um número", "Validação falhou para o campo Preço.");
+        Assert.assertEquals(response.getDescricao(), "descrição não pode ficar em branco", "Validação falhou para o campo Descrição.");
+        Assert.assertEquals(response.getQuantidade(), "quantidade não pode ficar em branco", "Validação falhou para o campo Quantidade.");
     }
-
 }

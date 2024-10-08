@@ -4,28 +4,28 @@ import com.vemser.rest.client.UsuariosClient;
 import com.vemser.rest.data.factory.UsuariosDataFactory;
 import com.vemser.rest.model.UsuariosModel;
 import com.vemser.rest.model.response.usuario.UsuariosResponse;
-import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Story;
 import org.apache.http.HttpStatus;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.testng.Assert;
+import org.testng.annotations.*;
+import com.vemser.rest.provider.UsuariosDataProvider;
 
 import static com.vemser.rest.story.UsuarioStory.*;
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 
 @Epic(EPIC_CADASTRAR)
 @Story(CADASTRAR_STORY)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CadastrarUsuarios {
 
     private final UsuariosClient usuariosClient = new UsuariosClient();
+    private String usuarioId;
 
-    @Test
-    @Order(1)
-    @Description(CE_CADASTRAR_USUARIOS_001)
+    @BeforeMethod
+    public void setup() {
+    }
+
+    @Test(description = CE_CADASTRAR_USUARIOS_001)
     public void testValidarContratoDePostDeUsuariosComSucesso() {
         UsuariosModel usuario = UsuariosDataFactory.usuarioValido();
 
@@ -36,28 +36,23 @@ public class CadastrarUsuarios {
                     .body(matchesJsonSchemaInClasspath("schemas/usuarios_post.json"));
     }
 
-
-    @Test
-    @Order(2)
-    @Description(CE_CADASTRAR_USUARIOS_002)
+    @Test(description = CE_CADASTRAR_USUARIOS_002)
     public void testCadastrarUsuarioComSucesso() {
-
         UsuariosModel usuario = UsuariosDataFactory.usuarioValido();
 
         UsuariosResponse response =
                 usuariosClient.cadastrarUsuarios(usuario)
-                .then()
-                        .log().all()
-                        .statusCode(HttpStatus.SC_CREATED)
-                        .extract()
-                        .as(UsuariosResponse.class);
+                        .then()
+                            .log().all()
+                            .statusCode(HttpStatus.SC_CREATED)
+                            .extract()
+                            .as(UsuariosResponse.class);
 
-        Assertions.assertNotNull(response.getId());
+        usuarioId = response.getId();
+        Assert.assertNotNull(usuarioId, "O ID do usuário não deve ser nulo");
     }
 
-    @Test
-    @Order(3)
-    @Description(CE_CADASTRAR_USUARIOS_003)
+    @Test(description = CE_CADASTRAR_USUARIOS_003)
     public void testCadastrarUsuarioSemNome() {
         UsuariosModel usuario = UsuariosDataFactory.usuarioComNomeVazio();
 
@@ -69,33 +64,25 @@ public class CadastrarUsuarios {
                             .extract()
                             .as(UsuariosResponse.class);
 
-        Assertions.assertAll("response",
-                () -> Assertions.assertEquals("nome não pode ficar em branco", response.getNome(), "Mensagem de erro esperada")
-        );
+        Assert.assertEquals(response.getNome(), "nome não pode ficar em branco", "Mensagem de erro esperada");
     }
 
-    @Test
-    @Order(4)
-    @Description(CE_CADASTRAR_USUARIOS_004)
+    @Test(description = CE_CADASTRAR_USUARIOS_004)
     public void testCadastrarUsuarioComCampoVazio() {
         UsuariosModel usuario = UsuariosDataFactory.usuarioComEmailEmBranco();
 
         UsuariosResponse response =
                 usuariosClient.cadastrarUsuarios(usuario)
-                .then()
-                        .log().all()
-                        .statusCode(HttpStatus.SC_BAD_REQUEST)
-                        .extract()
-                        .as(UsuariosResponse.class);
+                        .then()
+                            .log().all()
+                            .statusCode(HttpStatus.SC_BAD_REQUEST)
+                            .extract()
+                            .as(UsuariosResponse.class);
 
-        System.out.println(response);
-       Assertions.assertEquals("email não pode ficar em branco", response.getEmail(), "Mensagem de erro esperada");
+        Assert.assertEquals(response.getEmail(), "email não pode ficar em branco", "Mensagem de erro esperada");
     }
 
-
-    @Test
-    @Order(5)
-    @Description(CE_CADASTRAR_USUARIOS_005)
+    @Test(description = CE_CADASTRAR_USUARIOS_005)
     public void testCadastrarUsuarioComEmailExistente() {
         UsuariosModel usuario = UsuariosDataFactory.usuarioComEmailExistente();
 
@@ -107,20 +94,29 @@ public class CadastrarUsuarios {
                             .extract()
                             .as(UsuariosResponse.class);
 
-        Assertions.assertEquals("Este email já está sendo usado", response.getMessage());
+        Assert.assertEquals(response.getMessage(), "Este email já está sendo usado");
     }
 
-    @ParameterizedTest
-    @MethodSource("com.vemser.rest.provider.UsusariosDataProvider#usuarioDataProvider")
-    @Order(6)
-    public void testDeveCadastrarUsuariosComDataProvider(UsuariosModel usuario, String key, String valiue) {
-        usuariosClient.cadastrarUsuarios(usuario)
-                .then()
-                .log().all()
-                .statusCode(HttpStatus.SC_BAD_REQUEST)
-                .body(key, Matchers.equalTo(valiue))
-                .extract()
-                .as(UsuariosResponse.class);
+    @Test(dataProvider = "usuarioDataProviderNull", dataProviderClass = UsuariosDataProvider.class, description = "Testar cadastro de usuários com Data Provider")
+    public void testDeveCadastrarUsuariosComDataProvider(UsuariosModel usuario, String key, String value) {
+        UsuariosResponse response =
+                usuariosClient.cadastrarUsuarios(usuario)
+                        .then()
+                            .log().all()
+                            .statusCode(HttpStatus.SC_BAD_REQUEST)
+                            .extract()
+                            .as(UsuariosResponse.class);
+
+        Assert.assertEquals(response.getNome(), value, "Verificando valor de retorno");
     }
 
+    @AfterSuite
+    public void tearDown() {
+        if (usuarioId != null) {
+            usuariosClient.deletarUsuarioPorId(usuarioId)
+                    .then()
+                        .log().all()
+                        .statusCode(HttpStatus.SC_NO_CONTENT);
+        }
+    }
 }

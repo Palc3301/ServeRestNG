@@ -50,17 +50,6 @@ public class ProdutosDataFactory {
         return produto;
     }
 
-    public static ProdutosModel produtoComPrecoNegativo() {
-        ProdutosModel produto = novoProduto();
-        produto.setPreco(String.valueOf(-1.0));
-        return produto;
-    }
-
-    public static ProdutosModel produtoComQuantidadeNegativa() {
-        ProdutosModel produto = novoProduto();
-        produto.setQuantidade(String.valueOf(-1));
-        return produto;
-    }
 
     public static ProdutosModel produtoComCamposVazios() {
         ProdutosModel produto = new ProdutosModel();

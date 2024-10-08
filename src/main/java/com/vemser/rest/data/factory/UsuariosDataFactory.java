@@ -55,26 +55,8 @@ public class UsuariosDataFactory {
 
     public static UsuariosModel usuarioComEmailExistente() {
         UsuariosModel usuario = novoUsuario();
-        usuario.setEmail("fulano@qa.com");
+        usuario.setEmail("alyson@qa.com.br");
         return usuario;
-    }
-
-    public static UsuariosModel buscarUsuarioComEmailExistente() {
-        Response response = given()
-                .baseUri("http://localhost:3000")
-                .get("/usuarios")
-                .then()
-                .statusCode(200)
-                .extract()
-                .response();
-
-        UsuariosModel[] usuarios = response.as(UsuariosModel[].class);
-
-        if (usuarios.length > 0) {
-            return usuarios[0];
-        } else {
-            throw new RuntimeException("Nenhum usuário encontrado no banco de dados.");
-        }
     }
 
 }

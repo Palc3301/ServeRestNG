@@ -30,5 +30,5 @@ public class UsuarioStory {
     public static final String CE_LISTAR_USUARIOS_002 = "Listar todos os usuários com filtro de nome";
     public static final String CE_LISTAR_USUARIOS_003 = "Listar usuário por ID que não existe";
     public static final String CE_LISTAR_USUARIOS_004 = "Listar usuário por ID com filtro de nome";
-    public static final String CE_LISTAR_USUARIOS_006 = "Listar usuário por ID com filtro de administrador";
+    public static final String CE_LISTAR_USUARIOS_005 = "Listar todos os usuários e verificar atributos";
 }

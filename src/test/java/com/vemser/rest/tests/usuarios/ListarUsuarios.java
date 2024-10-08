@@ -7,25 +7,24 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Story;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.*;
+import org.testng.Assert;
+import org.testng.annotations.*;
 
 import java.util.List;
 import java.util.Map;
 
 import static com.vemser.rest.story.UsuarioStory.*;
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
-import static org.junit.jupiter.api.Assertions.*;
 
 @Epic(EPIC_LISTAR)
 @Story(LISTAR_STORY)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ListarUsuarios {
 
     private final UsuariosClient usuariosClient = new UsuariosClient();
     private final String usuarioId = "4Rj3vrHUKwYtfPrl"; // ID de exemplo
     private final String nomeUsuario = "Alyson";
 
-    @BeforeEach
+    @BeforeMethod
     public void setup() {
         usuariosClient.cadastrarUsuarios(UsuariosDataFactory.usuarioValido())
                 .then()
@@ -33,9 +32,7 @@ public class ListarUsuarios {
                     .statusCode(HttpStatus.SC_CREATED);
     }
 
-    @Test
-    @Order(1)
-    @Description(CE_LISTAR_USUARIOS_001)
+    @Test(description = CE_LISTAR_USUARIOS_001)
     public void testDeveValidarContratoUsuariosPorIDComSucesso() {
         usuariosClient.listarUsuarioPorId(usuarioId)
                 .then()
@@ -43,9 +40,7 @@ public class ListarUsuarios {
                     .body(matchesJsonSchemaInClasspath("schemas/usuarios_por_id.json"));
     }
 
-    @Test
-    @Order(2)
-    @Description(CE_LISTAR_USUARIOS_002)
+    @Test(description = CE_LISTAR_USUARIOS_002)
     public void testDeveValidarContratoUsuariosComSucesso() {
         usuariosClient.listarUsuarios()
                 .then()
@@ -53,9 +48,7 @@ public class ListarUsuarios {
                     .body(matchesJsonSchemaInClasspath("schemas/usuarios_get.json"));
     }
 
-    @Test
-    @Order(3)
-    @Description(CE_LISTAR_USUARIOS_001)
+    @Test(description = CE_LISTAR_USUARIOS_003) // Corrigido para um identificador único
     public void testDeveListarTodosOsUsuariosComSucesso() {
         List<UsuariosResponse> response = usuariosClient.listarUsuarios()
                 .then()
@@ -65,12 +58,10 @@ public class ListarUsuarios {
                     .jsonPath()
                     .getList("usuarios", UsuariosResponse.class);
 
-        assertFalse(response.isEmpty(), "A lista de usuários não deve estar vazia");
+        Assert.assertFalse(response.isEmpty(), "A lista de usuários não deve estar vazia");
     }
 
-    @Test
-    @Order(4)
-    @Description(CE_LISTAR_USUARIOS_004)
+    @Test(description = CE_LISTAR_USUARIOS_004) // Corrigido para um identificador único
     public void testListarUsuariosPorNomeComSucesso() {
         List<Map<String, ?>> response = usuariosClient.listarUsuariosPorNome(nomeUsuario)
                 .then()
@@ -80,9 +71,28 @@ public class ListarUsuarios {
                     .jsonPath()
                     .getList("usuarios");
 
-        assertFalse(response.isEmpty(), "A lista de usuários não deve estar vazia");
-        assertTrue(response.stream().anyMatch(user -> ((String) user.get("nome")).equals(nomeUsuario)),
+        Assert.assertFalse(response.isEmpty(), "A lista de usuários não deve estar vazia");
+        Assert.assertTrue(response.stream().anyMatch(user -> ((String) user.get("nome")).equals(nomeUsuario)),
                 "A lista deve conter um usuário com o nome " + nomeUsuario);
     }
 
+    @Test(description = CE_LISTAR_USUARIOS_005)
+    public void testListarUsuariosVerificaAtributos() {
+        List<UsuariosResponse> response = usuariosClient.listarUsuarios()
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.SC_OK)
+                .extract()
+                .jsonPath()
+                .getList("usuarios", UsuariosResponse.class);
+
+        response.forEach(usuario -> {
+            Assert.assertNotNull(usuario.getId(), "O ID do usuário não deve ser nulo");
+            Assert.assertNotNull(usuario.getNome(), "O nome do usuário não deve ser nulo");
+        });
+    }
+
+    @AfterMethod
+    public void tearDown() {
+    }
 }

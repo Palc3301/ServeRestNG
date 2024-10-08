@@ -7,19 +7,19 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Story;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.*;
+import org.testng.Assert;
+import org.testng.annotations.*;
 
 import static com.vemser.rest.story.UsuarioStory.*;
 
 @Epic(EPIC_DELETAR)
 @Story(DELETAR_STORY)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class DeletarUsuarios {
 
     private final UsuariosClient usuariosClient = new UsuariosClient();
     private String usuarioId;
 
-    @BeforeEach
+    @BeforeMethod
     public void setup() {
         UsuariosResponse response = usuariosClient.cadastrarUsuarios(UsuariosDataFactory.usuarioValido())
                 .then()
@@ -28,12 +28,9 @@ public class DeletarUsuarios {
                     .extract()
                     .as(UsuariosResponse.class);
         usuarioId = response.getId();
-
     }
 
-    @Test
-    @Order(1)
-    @Description(CE_DELETAR_USUARIOS_001)
+    @Test(description = CE_DELETAR_USUARIOS_001)
     public void testDeletarUsuarioComSucesso() {
         usuariosClient.deletarUsuario(usuarioId)
                 .then()
@@ -41,23 +38,21 @@ public class DeletarUsuarios {
                     .statusCode(HttpStatus.SC_OK);
     }
 
-    @Test
-    @Order(2)
-    @Description(CE_DELETAR_USUARIOS_002)
+    @Test(description = CE_DELETAR_USUARIOS_002)
     public void testDeletarUsuarioQueNaoExiste() {
         String idInexistente = "99999";
 
         UsuariosResponse response = usuariosClient.deletarUsuario(idInexistente)
                 .then()
-                .log().all()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .as(UsuariosResponse.class);
+                    .log().all()
+                    .statusCode(HttpStatus.SC_OK)
+                    .extract()
+                    .as(UsuariosResponse.class);
 
-        Assertions.assertEquals("Nenhum registro excluído", response.getMessage());
+        Assert.assertEquals("Nenhum registro excluído", response.getMessage());
     }
 
-    @AfterEach
+    @AfterMethod
     public void tearDown() {
     }
 }
